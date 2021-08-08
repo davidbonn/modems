@@ -20,11 +20,23 @@ Class interface for the Telit LE910C4 cellular module
 
 import time
 import pexpect
+import subprocess
 
 # TODO:  consider using an @retry decorator to handle the retries rather than with explicit loops
 # TODO:  ECM functions
 # TODO:  a lot of duplicated code could be refactored
 # TODO:  more info in __str__()
+
+
+def check_for_telit():
+    """checks for presence of telit module"""
+    with subprocess.Popen(["lsusb"], stdout=subprocess.PIPE, text=True) as p:
+        output = p.stdout.read()
+
+    if "Telit Wireless Solutions" in output:
+        return True
+
+    return False
 
 
 class ModemError(Exception):
