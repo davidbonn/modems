@@ -10,8 +10,19 @@
         python3 ecm.py --stop [--verbose]
 
     assumes initial setup (usbcfg and cgdcont) is done elsewhere
+    initial setup is:
+
+        AT#USBCFG=4
+
+        AT+CGDCONT=1,"IP","super"
+
+        AT#REBOOT
+
+    CGDCONT values will be different for non-sixfab SIM cards
 
 """
+
+# TODO:  keep internet connection up if we have to
 
 import argparse
 
