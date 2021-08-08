@@ -3,6 +3,16 @@ Class interface for the Telit LE910C4 cellular module
 
 
     this module needs both cu (apt-get install cu) and pexpect (pip install pexpect)
+    I broke this into a class heirarchy just to separate the functions a bit and make it
+    a bit less overwhelming to piece together what is going on.
+
+    In practice you use these functions by making and instance of the Telit class like so:
+
+    with Telit("/dev/ttyUSB2", verbose=True) as t:
+        t.send_at_ok()
+        ...
+
+    Recommended to always use send_at_ok() as the first thing you do with
 """
 
 # Copyright (C) 2021 Deepseek Labs, Inc.
@@ -14,6 +24,7 @@ import pexpect
 # TODO:  consider using an @retry decorator to handle the retries rather than with explicit loops
 # TODO:  ECM functions
 # TODO:  a lot of duplicated code could be refactored
+# TODO:  more info in __str__()
 
 
 class ModemError(Exception):
@@ -52,12 +63,12 @@ class ModemBase:
     def __str__(self):
         return f"{type(self)}({self._device}, verbose is {self._verbose})"
 
-    def start_cu(self):
+    def _start_cu(self):
         self._child = pexpect.spawn(self._cmd)
         return self
 
     def __enter__(self):
-        return self.start_cu()
+        return self._start_cu()
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._child.sendline("")
@@ -69,7 +80,7 @@ class ModemBase:
     def child(self):
         return self._child
 
-    def handle_single_result(self, i):
+    def _handle_single_result(self, i):
         """this function handles a single result and returns it as a str"""
         if i == 0:
             if self._verbose:
@@ -86,7 +97,7 @@ class ModemBase:
 
         raise ModemBusted
 
-    def wait_for_result(self):
+    def _wait_for_result(self):
         """wait for OK, ERROR, or timeout return "OK" or raise an exception"""
         i = self._child.expect([pexpect.TIMEOUT, "OK\r\n", "ERROR\r\n"], timeout=self._timeout)
 
@@ -120,7 +131,7 @@ class ModemBase:
             self._child.send("AT\r")
 
             try:
-                _ = self.wait_for_result()
+                _ = self._wait_for_result()
 
             except ModemTimeout:
                 time.sleep(0.5)
@@ -131,7 +142,7 @@ class ModemBase:
         raise ModemTimeout
 
     @classmethod
-    def strip_quotes(cls, buf):
+    def _strip_quotes(cls, buf):
         # strip quotes out from buf
         if len(buf) < 2:
             return buf
@@ -141,7 +152,7 @@ class ModemBase:
 
         return buf
 
-    def command_with_result(self, description, command, pattern):
+    def _command_with_result(self, description, command, pattern):
         """send a command and wait for a result pattern and OK"""
         if self._verbose:
             print(f"[telit] {description} {command}")
@@ -149,8 +160,8 @@ class ModemBase:
         self._child.send(f"{command}\r")
 
         i = self._child.expect([pexpect.TIMEOUT, pattern], timeout=self._timeout)
-        rc = self.handle_single_result(i)
-        _ = self.wait_for_result()
+        rc = self._handle_single_result(i)
+        _ = self._wait_for_result()
 
         return rc
 
@@ -164,13 +175,14 @@ class TelitGPS(ModemBase):
 
     def get_gpsp_status(self):
         """get the current state of the gps (in case it is on)"""
-        return int(self.command_with_result("Getting GPS power state with", "AT$GPSP?", r"[$]GPSP:[ ]+([0-9])\r\n"))
+        rc = self._command_with_result("Getting GPS power state with", "AT$GPSP?", r"[$]GPSP:[ ]+([0-9])\r\n")
+        return int(rc)
 
     def send_gpsp(self, state):
         """turn the gps on or off"""
         self._child.send(f"AT$GPSP={state}\r")
 
-        _ = self.wait_for_result()
+        _ = self._wait_for_result()
         return True
 
     def send_gpsp_on(self):
@@ -189,7 +201,7 @@ class TelitGPS(ModemBase):
 
     def _get_one_position(self):
         """get position, matched string or None"""
-        return self.command_with_result(
+        return self._command_with_result(
             "Getting current position with", "AT$GPSACP", r"[$]GPSACP:[ ]+([0-9A-Z,.]+)\r\n")
 
     @classmethod
@@ -294,7 +306,7 @@ class TelitECM(TelitGPS):
     def __init__(self, device, verbose=False, timeout=10):
         super().__init__(device, timeout=timeout, verbose=verbose)
 
-    def wait_for_reboot(self):
+    def _wait_for_reboot(self):
         """wait a long time, then do AT resync """
         if self._verbose:
             print(f"[telit] Rebooting... expect a long pause")
@@ -311,7 +323,7 @@ class TelitECM(TelitGPS):
             if self._verbose:
                 print(f"[telit] Restarting cu")
 
-            self.start_cu()
+            self._start_cu()
 
         time.sleep(0.5)
         self.send_at_ok()
@@ -322,11 +334,11 @@ class TelitECM(TelitGPS):
             print(f"[telit] Sending AT#REBOOT")
 
         self._child.send("AT#REBOOT\r")
-        self.wait_for_reboot()
+        self._wait_for_reboot()
 
     def get_usb_config(self):
         """get weird USB config value"""
-        return int(self.command_with_result("Sending", "AT#USBCFG?", r"[#]USBCFG:[ ]+([0-9]+)\r\n"))
+        return int(self._command_with_result("Sending", "AT#USBCFG?", r"[#]USBCFG:[ ]+([0-9]+)\r\n"))
 
     def set_usb_config(self, value=4):
         """set USB config.  in practice we always set it to 4"""
@@ -334,8 +346,8 @@ class TelitECM(TelitGPS):
             print(f"[telit] Sending AT#USBCFG={value}")
 
         self._child.send(f"AT#USBCFG={value}\r")
-        _ = self.wait_for_result()
-        self.wait_for_reboot()
+        _ = self._wait_for_result()
+        self._wait_for_reboot()
 
     def get_cgdcont(self):
         """
@@ -369,8 +381,8 @@ class TelitECM(TelitGPS):
 
                 if len(stuff) >= 4 and stuff[0] == "1":
                     rc = stuff
-                    rc[1] = self.strip_quotes(rc[1])
-                    rc[2] = self.strip_quotes(rc[2])
+                    rc[1] = self._strip_quotes(rc[1])
+                    rc[2] = self._strip_quotes(rc[2])
 
         if rc is None:
             raise ECMDataError
@@ -383,8 +395,7 @@ class TelitECM(TelitGPS):
             print(f'[telit] Sending AT+CGDCONT=1,"{ip}","{sim_id}"')
 
         self._child.send(f'AT+CGDCONT=1,"{ip}","{sim_id}"\r')
-        _ = self.wait_for_result()
-        self.wait_for_reboot()
+        _ = self._wait_for_result()
 
     def ecm_start(self):
         """bring ECM online"""
@@ -392,7 +403,7 @@ class TelitECM(TelitGPS):
             print(f"[telit] Sending AT#ECM=1,0")
 
         self._child.send("AT#ECM=1,0\r")
-        _ = self.wait_for_result()
+        _ = self._wait_for_result()
 
     def ecm_stop(self):
         """take ECM offline"""
@@ -400,7 +411,7 @@ class TelitECM(TelitGPS):
             print(f"[telit] Sending AT#ECMD=0")
 
         self._child.send("AT#ECMD=0\r")
-        _ = self.wait_for_result()
+        _ = self._wait_for_result()
 
     def ecm_up(self):
         """returns truthy if ECM is up and running"""
@@ -412,12 +423,12 @@ class TelitECM(TelitGPS):
         """
             returns list of str with ECM configuration
         """
-        stuff = self.command_with_result("Sending", "AT#ECMC?", r'[#]ECMC:[ ]+([0-9A-Za-z,."]+)\r\n')
+        stuff = self._command_with_result("Sending", "AT#ECMC?", r'[#]ECMC:[ ]+([0-9A-Za-z,."]+)\r\n')
         rc = None
         stuff = stuff.split(",")
 
         if len(stuff) >= 5:
-            rc = [self.strip_quotes(v) for v in stuff]
+            rc = [self._strip_quotes(v) for v in stuff]
 
         if rc is None:
             raise ECMDataError
@@ -436,12 +447,12 @@ class Telit(TelitECM):
     @property
     def iccid(self):
         """Returns ICCID found on modem as an int"""
-        return int(self.command_with_result("Getting ICCID with", "AT+ICCID", r"[+]ICCID:[ ]+([0-9]+)\r\n"))
+        return int(self._command_with_result("Getting ICCID with", "AT+ICCID", r"[+]ICCID:[ ]+([0-9]+)\r\n"))
 
     @property
     def signal_strength(self):
         """Returns signal strength as a float between 0 and 1 or None if not computed"""
-        rc = int(self.command_with_result(
+        rc = int(self._command_with_result(
             "Getting signal strength with", "AT+CSQ", r"[+]CSQ:[ ]+([0-9]+),[0-9]+\r\n"))
 
         if rc <= 31:
