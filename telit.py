@@ -301,13 +301,17 @@ class TelitECM(TelitGPS):
 
         time.sleep(30)
 
-        if self._child.exitstatus is not None or self._child.signalstatus is not None:
+        if self._verbose:
+            print(f"[telit] Waiting for cu to terminate")
+        i = self._child.expect([pexpect.TIMEOUT, pexpect.EOF], timeout=30)
+
+        if i == 0:
+            raise ModemTimeout
+        elif i == 1:
             if self._verbose:
                 print(f"[telit] Restarting cu")
 
             self.start_cu()
-        elif self._verbose:
-            print(f"[telit] Child did not exit?  Weird.")
 
         time.sleep(0.5)
         self.send_at_ok()
