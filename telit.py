@@ -5,6 +5,9 @@ Class interface for the Telit LE910C4 cellular module
     this module needs both cu (apt-get install cu) and pexpect (pip install pexpect)
 """
 
+# Copyright (C) 2021 Deepseek Labs, Inc.
+
+
 import time
 import pexpect
 
@@ -45,6 +48,9 @@ class ModemBase:
         self._verbose = verbose
         self._child = None
         self._cmd = f"cu --nostop --parity none --baud 115200 --line {self._device} dir"
+
+    def __str__(self):
+        return f"{type(self)}({self._device}, verbose is {self._verbose})"
 
     def start_cu(self):
         self._child = pexpect.spawn(self._cmd)

@@ -14,6 +14,8 @@
     this program needs both cu (apt-get install cu) and pexpect (pip install pexpect)
 """
 
+# Copyright (C) 2020 Deepseek Labs, Inc.
+
 import argparse
 import time
 import os
