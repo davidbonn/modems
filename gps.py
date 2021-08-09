@@ -4,6 +4,10 @@
    in the LATITUDE and LONGITUDE properties
 """
 
+# Copyright (C) 2021 Deepseek Labs, Inc.
+
+# TODO:  have it come up in parallel to shorten bootup time
+
 import argparse
 
 from common.rediswrapper import RedisWrapper
@@ -30,9 +34,16 @@ def main():
 
         pos = t.get_position(1.5, total=args.retries)
 
+        if pos is None:
+            if args.verbose:
+                print(f"[gps] Unable to get GPS fix")
+
         if pos is not None:
             R["LATITUDE"] = pos["latitude"]
             R["LONGITUDE"] = pos["longitude"]
+
+            if args.verbose:
+                print(f"[gps] GPS fix:  {pos['latitude']:.3f}, {pos['longitude']:.3f}")
 
         _ = t.send_gpsp_off()
 
