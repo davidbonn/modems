@@ -21,6 +21,7 @@
     CGDCONT values will be different for non-sixfab SIM cards
 
 """
+# Copyright (C) 2021 Deepseek Labs, Inc.
 
 # TODO:  keep internet connection up if we have to
 
@@ -43,6 +44,8 @@ def find_pi_id():
 
         type determination from
             https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
+
+        needs to be factored out somewhere else
     """
 
     with open("/proc/cpuinfo", "r") as f:
