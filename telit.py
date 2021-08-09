@@ -12,7 +12,7 @@ Class interface for the Telit LE910C4 cellular module
         t.send_at_ok()
         ...
 
-    Recommended to always use send_at_ok() as the first thing you do with
+    Recommended to always use send_at_ok() as the first thing you do with it
 """
 
 # Copyright (C) 2021 Deepseek Labs, Inc.
