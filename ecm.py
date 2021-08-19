@@ -46,7 +46,7 @@ def set_clock(t, check=None):
     t -- is Telit instance
     check -- None or pathname to touch when we set the clock so we set it exactly once
 
-    uses chrony settime , could use date if we aren't using NTP clock
+    use date to set the time because chrony is not yet running
 
     this will give you time sync but not great time sync
     """
@@ -55,12 +55,12 @@ def set_clock(t, check=None):
         return
 
     utc = t.utc_clock
-    utc_str = f"{utc:%b %d, %Y %H:%M:%S}"
+    utc_str = f"{utc:%m%d%H%M%Y.%S}"
 
     if verbose:
         print(f"[ecm] Setting time to {utc_str}")
 
-    rc = subprocess.run(["sudo", "chronyc", "settime", utc_str], capture_output=True, text=True).stdout
+    rc = subprocess.run(["sudo", "date", "--utc", utc_str], capture_output=True, text=True).stdout
 
     if verbose:
         print(f"[ecm] Output from chronyc:\n{rc}")
