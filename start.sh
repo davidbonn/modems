@@ -26,5 +26,5 @@ workon py3cv4
 cd modems
 
 python3 ./ecm.py --verbose --start --setclock
-python3 ./gps.py --verbose
+python3 ./gps.py --verbose --retries 1000 &
 
