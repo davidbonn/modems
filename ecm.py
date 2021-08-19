@@ -63,7 +63,7 @@ def set_clock(t, check=None):
     rc = subprocess.run(["sudo", "date", "--utc", utc_str], capture_output=True, text=True).stdout
 
     if verbose:
-        print(f"[ecm] Output from chronyc:\n{rc}")
+        print(f"[ecm] Output from date:\n{rc}")
 
     if check is not None:
         with open(check, "w") as f:
