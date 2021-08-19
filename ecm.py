@@ -9,6 +9,8 @@
         python3 ecm.py --start [--verbose]
         python3 ecm.py --stop [--verbose]
 
+    When starting you can optionally include --setclock to set the OS clock to the hardware clock of the modem
+
     assumes initial setup (usbcfg and cgdcont) is done elsewhere
     initial setup is:
 
@@ -24,13 +26,48 @@
 # Copyright (C) 2021 Deepseek Labs, Inc.
 
 # TODO:  keep internet connection up if we have to
+# TODO:  stash things like signal strength and network name in Redis
 
 import argparse
+import os
+import subprocess
 
 from common.rediswrapper import RedisWrapper
 from telit import Telit, check_for_telit
 
+Clock_flag = "/tmp/telit_clock"
 verbose = False
+
+
+def set_clock(t, check=None):
+    """
+    sets os clock from HW clock on modem, good for timesync
+
+    t -- is Telit instance
+    check -- None or pathname to touch when we set the clock so we set it exactly once
+
+    uses chrony settime , could use date if we aren't using NTP clock
+
+    this will give you time sync but not great time sync
+    """
+
+    if check is not None and os.path.exists(check):
+        return
+
+    utc = t.utc_clock
+    utc_str = f"{utc:%b %d, %Y %H:%M:%S}"
+
+    if verbose:
+        print(f"[ecm] Setting time to {utc_str}")
+
+    rc = subprocess.run(["sudo", "chronyc", "settime", utc_str], capture_output=True, text=True).stdout
+
+    if verbose:
+        print(f"[ecm] Output from chronyc:\n{rc}")
+
+    if check is not None:
+        with open(check, "w") as f:
+            pass
 
 
 def find_pi_id():
@@ -88,6 +125,7 @@ def main():
     ap.add_argument("--verbose", required=False, default=False, action='store_true')
     ap.add_argument("--start", required=False, default=False, action='store_true')
     ap.add_argument("--stop", required=False, default=False, action='store_true')
+    ap.add_argument("--setclock", required=False, default=False, action='store_true')
 
     args = ap.parse_args()
 
@@ -95,6 +133,10 @@ def main():
 
     if args.start and args.stop:
         print(f"[ecm] Error:  cannot specify both --start and --stop")
+        exit(1)
+
+    if args.setclock and not args.start:
+        print(f"[ecm] Error, must specify --setclock only with --start")
         exit(1)
 
     R = RedisWrapper()
@@ -127,6 +169,9 @@ def main():
                     print(f"[ecm] ECM mode already enabled")
 
                 exit(1)
+
+            if args.setclock:
+                set_clock(t, Clock_flag)
 
             t.ecm_start()
         elif args.stop:
