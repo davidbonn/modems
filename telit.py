@@ -19,19 +19,20 @@ Class interface for the Telit LE910C4 cellular module
 
 
 import time
+import datetime
 import pexpect
 import subprocess
 
 # TODO:  consider using an @retry decorator to handle the retries rather than with explicit loops
-# TODO:  ECM functions
 # TODO:  a lot of duplicated code could be refactored
+# TODO:  RTC clock commands
+# TODO:  Get network provider name
 # TODO:  more info in __str__()
 
 
 def check_for_telit():
     """checks for presence of telit module"""
-    with subprocess.Popen(["lsusb"], stdout=subprocess.PIPE, text=True) as p:
-        output = p.stdout.read()
+    output = subprocess.run(["lsusb"], capture_output=True, text=True).stdout
 
     if "Telit Wireless Solutions" in output:
         return True
@@ -56,6 +57,10 @@ class TelitGPSDataError(ModemError):
 
 
 class ECMDataError(ModemError):
+    pass
+
+
+class TelitDataError(ModemError):
     pass
 
 
@@ -475,3 +480,26 @@ class Telit(TelitECM):
             rc = None
 
         return rc
+
+    @property
+    def clock(self):
+        """returns current value of RTC as datetime in whatever timezone the rtc uses"""
+
+        rc = self._command_with_result(
+            "Getting clock value with", "AT+CCLK?", r'[+]CCLK:[ ]+["]([-0-9,/:+]+)["]\r\n')
+
+        zone_offset = int(rc[17:])
+
+        if zone_offset % 4 != 0:
+            raise TelitDataError("FIXME:  handle zone_offsets that aren't a whole hour")
+
+        tz = datetime.timezone(offset=datetime.timedelta(hours=zone_offset // 4))
+        return datetime.datetime(
+            int(rc[0:2]) + 2000, int(rc[3:5]), int(rc[6:8]), int(rc[9:11]), int(rc[12:14]), int(rc[15:17]),
+            tzinfo=tz
+        )
+
+    @property
+    def utc_clock(self):
+        """returns current value of RTC normalized to UTC"""
+        return self.clock.astimezone(datetime.timezone(offset=datetime.timedelta(hours=0)))
