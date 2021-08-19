@@ -25,7 +25,6 @@ import subprocess
 
 # TODO:  consider using an @retry decorator to handle the retries rather than with explicit loops
 # TODO:  a lot of duplicated code could be refactored
-# TODO:  RTC clock commands
 # TODO:  Get network provider name
 # TODO:  more info in __str__()
 
