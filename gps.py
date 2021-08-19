@@ -47,6 +47,9 @@ def main():
 
         _ = t.send_gpsp_off()
 
+    if args.verbose:
+        print("[gps] Completed GPS fix")
+
 
 if __name__ == "__main__":
     main()
