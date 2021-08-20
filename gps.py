@@ -21,12 +21,16 @@ R = RedisWrapper()
 def set_coordinates(pos, verbose):
     global R
 
-    if pos is not None:
-        R["LATITUDE"] = pos["latitude"]
-        R["LONGITUDE"] = pos["longitude"]
+    if pos is None:
+        return
 
-        if verbose:
-            print(f"[gps] GPS fix:  {pos['latitude']:.3f}, {pos['longitude']:.3f}")
+    R["LATITUDE"] = pos["latitude"]
+    R["LONGITUDE"] = pos["longitude"]
+    R["ALTITUDE"] = pos["altitude"]
+    R["HDOP"] = pos["hdop"]
+
+    if verbose:
+        print(f"[gps] GPS fix:  {pos['latitude']:.3f}, {pos['longitude']:.3f}")
 
 
 def get_gps_fix(t, verbose, retries):
