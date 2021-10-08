@@ -6,7 +6,7 @@ Class interface for the Telit LE910C4 cellular module
     I broke this into a class heirarchy just to separate the functions a bit and make it
     a bit less overwhelming to piece together what is going on.
 
-    In practice you use these functions by making and instance of the Telit class like so:
+    In practice you use these functions by making an instance of the Telit class like so:
 
     with Telit("/dev/ttyUSB2", verbose=True) as t:
         t.send_at_ok()
@@ -69,12 +69,13 @@ class ModemBase:
     supports context managers and manages pexpect child process and also has helper code to wait for
     modem results and do initial command-finding (by repeated sending 'AT' commands)
     """
-    def __init__(self, device, timeout=10, verbose=False):
+    def __init__(self, device, timeout=10, verbose=False, bps=115200):
         self._device = device
         self._timeout = timeout
         self._verbose = verbose
+        self._bps = bps
         self._child = None
-        self._cmd = f"cu --nostop --parity none --baud 115200 --line {self._device} dir"
+        self._cmd = f"cu --nostop --parity none --baud {self._bps} --line {self._device} dir"
 
     def __str__(self):
         return f"{type(self)}({self._device}, verbose is {self._verbose})"
