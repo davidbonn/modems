@@ -15,6 +15,7 @@ export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
 export PATH=/bin:/usr/bin:/usr/local/bin
 
+export PYTHONDONTWRITEBYTECODE=yes
 export PYTHONUNBUFFERED=1
 
 cd $HOME
