@@ -168,8 +168,6 @@ def main():
                 if verbose:
                     print(f"[ecm] ECM mode already enabled")
 
-                exit(1)
-
             if args.setclock:
                 set_clock(t, Clock_flag)
 
