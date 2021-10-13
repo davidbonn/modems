@@ -31,6 +31,7 @@
 import argparse
 import os
 import subprocess
+import re
 
 from common.rediswrapper import RedisWrapper
 from telit import Telit, check_for_telit
@@ -118,6 +119,25 @@ def find_pi_id():
     return rc
 
 
+def check_connection(host):
+    cmd = ["ping", "-i", "0.4", "-c", "5", host]
+
+    if verbose:
+        print(f"[ecm] Checking ECM connection to {host}")
+
+    output = subprocess.run(cmd, capture_output=True, text=True).stdout
+
+    m = re.search(r' ([0-9]+) received, ', output)
+
+    if m is not None:
+        if verbose:
+            print(f"[ecm] {host} returned {int(m[1])} packets")
+
+        return int(m[1]) != 0
+
+    return False
+
+
 def main():
     global verbose
 
@@ -125,14 +145,16 @@ def main():
     ap.add_argument("--verbose", required=False, default=False, action='store_true')
     ap.add_argument("--start", required=False, default=False, action='store_true')
     ap.add_argument("--stop", required=False, default=False, action='store_true')
+    ap.add_argument("--check", required=False, default=False, action='store_true')
+    ap.add_argument("--host", required=False, default="sixfab.com", type=str)
     ap.add_argument("--setclock", required=False, default=False, action='store_true')
 
     args = ap.parse_args()
 
     verbose = args.verbose
 
-    if args.start and args.stop:
-        print(f"[ecm] Error:  cannot specify both --start and --stop")
+    if len(list(filter(lambda x: x, [args.start, args.stop, args.check]))) != 1:
+        print(f"[ecm] Error:  can specify only one of --start, --stop, --check")
         exit(1)
 
     if args.setclock and not args.start:
@@ -140,14 +162,18 @@ def main():
         exit(1)
 
     R = RedisWrapper()
-    pi_id = find_pi_id()
-    R["PI_ID"] = pi_id
 
-    if verbose:
-        print(f"[ecm] pi_id is {pi_id}")
+    if args.start:
+        pi_id = find_pi_id()
+        R["PI_ID"] = pi_id
+
+        if verbose:
+            print(f"[ecm] pi_id is {pi_id}")
+
+        if not check_for_telit():
+            R["ID"] = pi_id
 
     if not check_for_telit():
-        R["ID"] = pi_id
         if verbose:
             print(f"[ecm] no telit card, exiting")
 
@@ -182,6 +208,13 @@ def main():
                 exit(1)
 
             t.ecm_stop()
+        elif args.check:
+            if not check_connection(args.host):
+                if verbose:
+                    print(f"[ecm] Network down, restarting ECM connection")
+
+                t.send_at_ok()
+                t.ecm_start()
 
 
 if __name__ == "__main__":
