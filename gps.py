@@ -30,7 +30,7 @@ def set_coordinates(pos, verbose):
     R["HDOP"] = pos["hdop"]
 
     if verbose:
-        print(f"[gps] GPS fix:  {pos['latitude']:.3f}, {pos['longitude']:.3f}")
+        print(f"[gps] GPS fix:  {pos['latitude']:.4f}, {pos['longitude']:.4f}")
 
 
 def get_gps_fix(t, verbose, retries):
