@@ -6,10 +6,7 @@
 
 # Copyright (C) 2021 Deepseek Labs, Inc.
 
-# TODO:  have it come up in parallel to shorten bootup time
-# TODO:  run continuously as you get more accurate results
-# TODO:  read from /boot/deepseek/location.json for initial values
-# TODO:  write to /tmp/deepseek/location.json as you refine the location
+# TODO:  I'm still not feeling warm-and-fuzzy about convergence of coordinate accuracy over time
 
 import argparse
 import time
