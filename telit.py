@@ -467,6 +467,12 @@ class Telit(TelitECM):
         return int(self._command_with_result("Getting ICCID with", "AT+ICCID", r"[+]ICCID:[ ]+([0-9]+)\r\n"))
 
     @property
+    def imei(self):
+        """returns IMEI number found on modem as an int"""
+        rc = int(self._command_with_result("Getting IMEI with", "AT+IMEISV", r"[+]IMEISV:[ ]+([0-9]+)\r\n"))
+        return rc // 100
+
+    @property
     def signal_strength(self):
         """Returns signal strength as a float between 0 and 1 or None if not computed"""
         rc = int(self._command_with_result(
