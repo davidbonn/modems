@@ -24,8 +24,8 @@ Location_tmp = "/tmp/deepseek/location.json"
 
 def coord_within_tolerance(coord1, coord2):
     """see if coord1 and coord2 are equal within tolerances (four decimal places)"""
-    r_lat = math.isclose(coord1["latitude"], coord2["latitude"], rel_tol=1e-7)
-    r_lon = math.isclose(coord1["longitude"], coord2["longitude"], rel_tol=1e-7)
+    r_lat = math.isclose(coord1["latitude"], coord2["latitude"], rel_tol=1e-8)
+    r_lon = math.isclose(coord1["longitude"], coord2["longitude"], rel_tol=1e-8)
 
     return r_lat and r_lon
 
@@ -138,6 +138,7 @@ def get_continuous_gps_fix(t, verbose, until):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--verbose", default=False, action='store_true')
+    ap.add_argument("--toss", default=0, type=int)
     ap.add_argument("--retries", default=40, type=int)
     ap.add_argument("--until", default=None, type=float, required=False)
 
@@ -154,7 +155,9 @@ def main():
             _ = t.send_gpsp_on()
 
         if args.until is None:
-            get_gps_fix(t, args.verbose, args.retries)
+            for i in range(args.toss+1):
+                get_gps_fix(t, args.verbose, args.retries)
+                time.sleep(5)
         else:
             get_continuous_gps_fix(t, args.verbose, args.until)
 
