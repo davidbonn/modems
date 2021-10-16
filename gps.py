@@ -24,8 +24,8 @@ Location_tmp = "/tmp/deepseek/location.json"
 
 def coord_within_tolerance(coord1, coord2):
     """see if coord1 and coord2 are equal within tolerances (four decimal places)"""
-    r_lat = math.isclose(coord1["latitude"], coord2["latitude"], rel_tol=1e-8)
-    r_lon = math.isclose(coord1["longitude"], coord2["longitude"], rel_tol=1e-8)
+    r_lat = math.isclose(coord1["latitude"], coord2["latitude"], rel_tol=1e-9, abs_tol=1e-4)
+    r_lon = math.isclose(coord1["longitude"], coord2["longitude"], rel_tol=1e-9, abs_tol=1e-4)
 
     return r_lat and r_lon
 
@@ -37,11 +37,11 @@ def set_coordinates(pos, verbose):
     if pos is None:
         return
 
-    if R["HDOP"] is not None and pos["hdop"] <= R["HDOP"]:
+    if R["HDOP"] is not None and pos["hdop"] > R["HDOP"]:
         return
 
-    R["LATITUDE"] = pos["latitude"]
-    R["LONGITUDE"] = pos["longitude"]
+    R["LATITUDE"] = round(pos["latitude"], 4)
+    R["LONGITUDE"] = round(pos["longitude"], 4)
     R["ALTITUDE"] = pos["altitude"]
     R["HDOP"] = pos["hdop"]
 
