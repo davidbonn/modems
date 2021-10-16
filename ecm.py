@@ -61,10 +61,10 @@ def set_clock(t, check=None):
     if verbose:
         print(f"[ecm] Setting time to {utc_str}")
 
-    rc = subprocess.run(["sudo", "date", "--utc", utc_str], capture_output=True, text=True).stdout
+    rc = subprocess.run(["sudo", "date", "--utc", utc_str], capture_output=True, text=True)
 
     if verbose:
-        print(f"[ecm] Output from date:\n{rc}")
+        print(f"[ecm] Output from date:\n{rc.stdout}\n{rc.stderr}")
 
     if check is not None:
         with open(check, "w") as f:
