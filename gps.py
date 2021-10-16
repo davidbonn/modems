@@ -69,7 +69,7 @@ def update_coordinates(pos, verbose, force=False):
             with open(Location_tmp, "r") as f:
                 current = json.load(f)
 
-            if value["hdop"] >= current["hdop"] or coord_within_tolerance(current, value):
+            if value["hdop"] >= current["hdop"]:
                 return
 
     if verbose:
@@ -136,6 +136,7 @@ def get_continuous_gps_fix(t, verbose, until):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--init", default=False, action='store_true')
     ap.add_argument("--verbose", default=False, action='store_true')
     ap.add_argument("--toss", default=0, type=int)
     ap.add_argument("--retries", default=40, type=int)
@@ -147,7 +148,8 @@ def main():
         print(f"[gps] No telit card, exiting")
         exit(1)
 
-    initialize_coordinates(args.verbose)
+    if args.init:
+        initialize_coordinates(args.verbose)
 
     with Telit("/dev/ttyUSB3", args.verbose) as t:
         t.send_at_ok()
