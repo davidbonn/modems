@@ -49,7 +49,7 @@ def set_coordinates(pos, verbose):
         print(f"[gps] GPS fix:  {pos['latitude']:.4f}, {pos['longitude']:.4f}")
 
 
-def update_coordinates(pos, verbose):
+def update_coordinates(pos, verbose, force=False):
     """
     update /tmp/deepseek/location.json if necessary
 
@@ -59,19 +59,18 @@ def update_coordinates(pos, verbose):
     if pos is None:
         return
 
-    value = dict()
-    for k in ["latitude", "longitude", "altitude", "hdop"]:
-        value[k] = pos[k]
+    value = {k: pos[k] for k in ["latitude", "longitude", "altitude", "hdop"]}
 
     value["latitude"] = round(value["latitude"], 4)
     value["longitude"] = round(value["longitude"], 4)
 
-    if os.path.exists(Location_tmp):
-        with open(Location_tmp, "r") as f:
-            current = json.load(f)
+    if not force:
+        if os.path.exists(Location_tmp):
+            with open(Location_tmp, "r") as f:
+                current = json.load(f)
 
-        if value["hdop"] >= current["hdop"] or coord_within_tolerance(current, value):
-            return
+            if value["hdop"] >= current["hdop"] or coord_within_tolerance(current, value):
+                return
 
     if verbose:
         print(
@@ -94,7 +93,7 @@ def initialize_coordinates(verbose):
     loc["hdop"] = 9999.00
 
     set_coordinates(loc, verbose)
-    update_coordinates(loc, verbose)
+    update_coordinates(loc, verbose, force=True)
 
 
 def get_gps_fix(t, verbose, retries):
@@ -147,6 +146,8 @@ def main():
     if not check_for_telit():
         print(f"[gps] No telit card, exiting")
         exit(1)
+
+    initialize_coordinates(args.verbose)
 
     with Telit("/dev/ttyUSB3", args.verbose) as t:
         t.send_at_ok()
