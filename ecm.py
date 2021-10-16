@@ -25,7 +25,6 @@
 """
 # Copyright (C) 2021 Deepseek Labs, Inc.
 
-# TODO:  keep internet connection up if we have to
 # TODO:  stash things like signal strength and network name in Redis
 
 import argparse
