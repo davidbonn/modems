@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
    this program gets a GPS fix and puts it in Redis, in particular
-   in the LATITUDE and LONGITUDE properties
+   in the LATITUDE, LONGITUDE, ALTITUDE, and HDOP properties
+   also puts a copy of a decent fix in /tmp/deepseek/location.json
 """
 
 # Copyright (C) 2021 Deepseek Labs, Inc.
 
+# TODO:  organization of saving to /boot/deepseek, /tmp/deepseek, and REDIS is ugly and needs a rethink
 # TODO:  I'm still not feeling warm-and-fuzzy about convergence of coordinate accuracy over time
 
 import argparse
