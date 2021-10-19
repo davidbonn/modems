@@ -26,6 +26,7 @@
 # Copyright (C) 2021 Deepseek Labs, Inc.
 
 # TODO:  stash things like signal strength and network name in Redis
+# TODO:  sometimes the telit card doesn't appear to be there
 
 import argparse
 import os
