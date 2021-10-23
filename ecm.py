@@ -8,8 +8,9 @@
     usage:
         python3 ecm.py --start [--verbose]
         python3 ecm.py --stop [--verbose]
-
-    When starting you can optionally include --setclock to set the OS clock to the hardware clock of the modem
+        python3 ecm.py --check [--verbose]
+            --setclock will set the system clock from the modem time (probably from cellular time)
+            --host host will use that host instead of sixfab.com for ping check
 
     assumes initial setup (usbcfg and cgdcont) is done elsewhere
     initial setup is:
