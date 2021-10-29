@@ -26,12 +26,21 @@ workon py3cv4
 
 cd modems
 
-if lsusb | egrep Telit; then
-    echo "Found Telit"
-else
-    echo "Telit not found"
-    exit 0
-fi
+found=0
+
+# this is here because usb comes up in parallel with rc.local and might not be ready yet
+# usually ten seconds is more than sufficient for usb to come up properly
+while [ $found -le 1 ]
+do
+  if lsusb | egrep Telit; then
+      echo "[start] Found Telit"
+      found=99
+  else
+      echo "[start] Telit not found"
+      found=`expr $found + 1`
+      sleep 10
+  fi
+done
 
 python3 ./gps.py --verbose --init --retries 6
 python3 ./ecm.py --verbose --start --setclock
