@@ -139,6 +139,7 @@ def get_continuous_gps_fix(t, verbose, until):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--init", default=False, action='store_true')
+    ap.add_argument("--initonly", default=False, action='store_true')
     ap.add_argument("--verbose", default=False, action='store_true')
     ap.add_argument("--toss", default=0, type=int)
     ap.add_argument("--retries", default=40, type=int)
@@ -152,6 +153,8 @@ def main():
 
     if args.init:
         initialize_coordinates(args.verbose)
+        if args.initonly:
+            exit(0)
 
     with Telit("/dev/ttyUSB3", args.verbose) as t:
         t.send_at_ok()
