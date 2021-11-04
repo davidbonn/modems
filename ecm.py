@@ -24,7 +24,6 @@
     CGDCONT values will be different for non-sixfab SIM cards
 
 """
-# Copyright (C) 2021 Deepseek Labs, Inc.
 
 # TODO:  stash things like signal strength and network name in Redis
 # TODO:  sometimes the telit card doesn't appear to be there
@@ -178,7 +177,7 @@ def main():
         if verbose:
             print(f"[ecm] no telit card, exiting")
 
-        exit(1)
+        exit(0)
 
     with Telit("/dev/ttyUSB2", verbose=verbose) as t:
         if args.start:
