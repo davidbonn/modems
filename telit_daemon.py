@@ -11,6 +11,9 @@
         --host host          ~~ hostname for ecm check ping
 """
 
+# TODO:  testing
+# TODO:  sometimes we need to grab a second GPS fix to get an up-to-date value
+
 import argparse
 import os
 import time
@@ -30,6 +33,7 @@ Location = dict(latitude=0.0, longitude=0.0, elevation=0.0, hdop=9999.99)
 
 
 def note_location(pos, verbose):
+    """stash location in Redis and in /tmp/deepseek/location.json"""
     global Location, R
 
     if pos is None:
@@ -59,6 +63,7 @@ def note_location(pos, verbose):
 
 
 def gps_thread(interval, verbose):
+    """thread that continuously requests GPS information"""
     global Location
 
     # read gps info from /tmp/deepseek/location.json
@@ -101,6 +106,7 @@ def gps_thread(interval, verbose):
 
 
 def ecm_thread(interval, host, verbose):
+    """thread that checks if ECM is up and keeps it up, actually doesn't run as a thread."""
     while True:
         print(f"[telit_daemon:info] Time:  {time.asctime()}")
         time.sleep(interval)
@@ -109,7 +115,7 @@ def ecm_thread(interval, host, verbose):
             continue
 
         if verbose:
-            print(f"[telit_daemon:info] ECM connection down, restarting...")
+            print(f"[telit_daemon:info] ECM connection down, restarting connection")
 
         with Telit(Ecm_device, verbose) as t:
             t.send_at_ok()
