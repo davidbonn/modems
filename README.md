@@ -8,4 +8,6 @@ Currently only the Telit LE910* modems are supported.
 * gpstest.py -- test script
 * start.sh -- script to be run before fire detector and chrony to start up networking
 * telit.py -- class interface to Telit LE910* modems.
+* telit_daemon.py -- background process that does a lot of the work of ecm.py and gps.py
+
 
