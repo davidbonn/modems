@@ -11,22 +11,20 @@
         --host host          ~~ hostname for ecm check ping
 """
 
-# TODO:  testing
 # TODO:  sometimes we need to grab a second GPS fix to get an up-to-date value
+# TODO:  hook to external force a check of connection status
 
 import argparse
 import os
 import time
 import json
-import threading
 
 import ecm
 from common.rediswrapper import RedisWrapper
 from telit import Telit, check_for_telit
 
 R = RedisWrapper()
-Gps_device = "/dev/ttyUSB2"
-Ecm_device = "/dev/ttyUSB3"
+Device = "/dev/ttyUSB2"
 Location_src = "/boot/deepseek/location.json"
 Location_file = "/tmp/deepseek/location.json"
 Location = dict(latitude=0.0, longitude=0.0, elevation=0.0, hdop=9999.99)
@@ -59,11 +57,11 @@ def note_location(pos, verbose):
     if verbose:
         loc = f"({Location['latitude']},{Location['longitude']})"
         extra = f"+{Location['altitude']} HDOP={Location['hdop']}"
-        print(f"[telit_daemon:info] new location: ({loc}) {extra}")
+        print(f"[telit_daemon:info] new location: {loc} {extra}")
 
 
-def gps_thread(interval, verbose):
-    """thread that continuously requests GPS information"""
+def gps_init(verbose):
+    """get initial gps fix"""
     global Location
 
     # read gps info from /tmp/deepseek/location.json
@@ -80,7 +78,7 @@ def gps_thread(interval, verbose):
         note_location(Location, verbose)
 
     # get first gps fix
-    with Telit(Gps_device, verbose) as t:
+    with Telit(Device, verbose) as t:
         t.send_at_ok()
         t.send_gpsp_on()
 
@@ -92,41 +90,40 @@ def gps_thread(interval, verbose):
         note_location(pos, verbose)
         t.send_gpsp_off()
 
+
+def gps_check(verbose):
+    """periodically check for better gps fix"""
+    global Location
+
     # periodically check for a better gps fix
-    while True:
-        time.sleep(interval)
-        with Telit(Gps_device, verbose) as t:
-            t.send_at_ok()
-            t.send_gpsp_on()
+    with Telit(Device, verbose) as t:
+        t.send_at_ok()
+        t.send_gpsp_on()
 
-            pos = t.get_position(2.0, total=5)
-            note_location(pos, verbose)
+        pos = t.get_position(2.0, total=5)
+        note_location(pos, verbose)
 
-            t.send_gpsp_off()
+        t.send_gpsp_off()
 
 
-def ecm_thread(interval, host, verbose):
-    """thread that checks if ECM is up and keeps it up, actually doesn't run as a thread."""
-    while True:
-        print(f"[telit_daemon:info] Time:  {time.asctime()}")
-        time.sleep(interval)
+def ecm_check(host, verbose):
+    """checks if ECM is up and restore if it isn't"""
 
-        if ecm.check_connection(host):
-            continue
+    if ecm.check_connection(host):
+        return
 
-        if verbose:
-            print(f"[telit_daemon:info] ECM connection down, restarting connection")
+    if verbose:
+        print(f"[telit_daemon:info] ECM connection down, restarting connection")
 
-        with Telit(Ecm_device, verbose) as t:
-            t.send_at_ok()
-            t.ecm_start()
+    with Telit(Device, verbose) as t:
+        t.send_at_ok()
+        t.ecm_start()
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--verbose", action="store_true", default=False)
-    ap.add_argument("--ecmcheck", type=int, default=900)
-    ap.add_argument("--gpscheck", type=int, default=1800)
+    ap.add_argument("--check", type=int, default=900)
     ap.add_argument("--host", type=str, default="sixfab.com")
 
     args = ap.parse_args()
@@ -137,12 +134,17 @@ def main():
 
         exit(0)
 
-    gps = threading.Thread(name="GPS", target=gps_thread, args=(args.gpscheck, args.verbose))
-
+    gps_init(args.verbose)
     ecm.verbose = args.verbose
 
-    gps.start()
-    ecm_thread(args.ecmcheck, args.host, args.verbose)
+    while True:
+        if args.verbose:
+            print(f"[telit_daemon:info] Time check: {time.asctime()}")
+
+        ecm_check(args.host, args.verbose)
+        gps_check(args.verbose)
+
+        time.sleep(args.check)
 
 
 if __name__ == "__main__":
