@@ -43,7 +43,8 @@ do
 done
 
 if [ $found -eq 99 ]; then
-  python3 ./gps.py --verbose --init --retries 6
   python3 ./ecm.py --verbose --start --setclock
 fi
+
+python3 ./telit_daemon.py --verbose &
 
