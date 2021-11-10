@@ -6,8 +6,7 @@
 
     options:
         --verbose
-        --ecmcheck seconds   ~~ how often to check ecm connection
-        --gpscheck seconds   ~~ how often to check gps coordinates
+        --check seconds      ~~ how often to check ecm connection and gps
         --host host          ~~ hostname for ecm check ping
 """
 
@@ -121,12 +120,16 @@ def ecm_check(host, verbose):
 
 
 def main():
+    global Device
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--verbose", action="store_true", default=False)
+    ap.add_argument("--device", type=str, default=Device)
     ap.add_argument("--check", type=int, default=900)
     ap.add_argument("--host", type=str, default="sixfab.com")
 
     args = ap.parse_args()
+    Device = args.device
 
     if not check_for_telit():
         if args.verbose:
