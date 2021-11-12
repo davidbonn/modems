@@ -20,7 +20,7 @@ import json
 
 import ecm
 from common.rediswrapper import RedisWrapper
-from telit import Telit, check_for_telit
+from telit import Telit, ModemError, check_for_telit
 
 R = RedisWrapper()
 Device = "/dev/ttyUSB2"
@@ -99,7 +99,7 @@ def gps_check(verbose):
         t.send_at_ok()
         t.send_gpsp_on()
 
-        pos = t.get_position(2.0, total=5)
+        pos = t.get_position(2.0, total=2)
         note_location(pos, verbose)
 
         t.send_gpsp_off()
@@ -137,6 +137,10 @@ def main():
 
         exit(0)
 
+    if not os.path.exists(Device):
+        print(f"[telit_daemon:error] no device {Device}")
+        exit(0)
+
     gps_init(args.verbose)
     ecm.verbose = args.verbose
 
@@ -144,8 +148,11 @@ def main():
         if args.verbose:
             print(f"[telit_daemon:info] Time check: {time.asctime()}")
 
-        ecm_check(args.host, args.verbose)
-        gps_check(args.verbose)
+        try:
+            ecm_check(args.host, args.verbose)
+            gps_check(args.verbose)
+        except ModemError as e:
+            print(f"[telit_damon:error] Error:  {e}")
 
         time.sleep(args.check)
 
