@@ -17,6 +17,7 @@ import argparse
 import os
 import time
 import json
+import pexpect
 
 import ecm
 from common.rediswrapper import RedisWrapper
@@ -152,7 +153,9 @@ def main():
             ecm_check(args.host, args.verbose)
             gps_check(args.verbose)
         except ModemError as e:
-            print(f"[telit_damon:error] Error:  {e}")
+            print(f"[telit_daemon:error] Error:  {e}")
+        except pexpect.exceptions.EOF as e:
+            print(f"[telit_daemon:error] pexpect EOF error: {e}")
 
         time.sleep(args.check)
 
