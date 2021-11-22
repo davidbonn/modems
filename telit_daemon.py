@@ -10,6 +10,8 @@
         --host host          ~~ hostname for ecm check ping
 """
 
+# TODO:  grab /boot/deepseek/location.json from cloud
+# TODO:  use generation number rather than set HDOP to 9999
 # TODO:  sometimes we need to grab a second GPS fix to get an up-to-date value
 # TODO:  hook to external force a check of connection status
 
