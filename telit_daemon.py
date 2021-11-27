@@ -86,8 +86,12 @@ def gps_init(verbose):
 
         pos = None
 
-        while pos is None:
-            pos = t.get_position(2.0)
+        try:
+            while pos is None:
+                pos = t.get_position(2.0)
+
+        except ModemError as e:
+            print(f"[telit_daemon:error] Error:  {e}")
 
         note_location(pos, verbose)
         t.send_gpsp_off()
