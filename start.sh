@@ -17,6 +17,7 @@ export PATH=/bin:/usr/bin:/usr/local/bin
 
 export PYTHONDONTWRITEBYTECODE=yes
 export PYTHONUNBUFFERED=1
+export PYTHONPATH=/home/pi
 
 cd $HOME
 
