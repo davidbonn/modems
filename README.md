@@ -10,4 +10,5 @@ Currently only the Telit LE910* modems are supported.
 * telit.py -- class interface to Telit LE910* modems.
 * telit_daemon.py -- background process that does a lot of the work of ecm.py and gps.py
 
+telit_daemon.py stores the location in REDIS and /boot/deepseek/location.json .
 
